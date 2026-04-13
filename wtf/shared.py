@@ -4,8 +4,13 @@ from rich.console import Console
 from openai import OpenAI
 from os import getenv
 from pathlib import Path
+from subprocess import run, CompletedProcess
+
+from typing import Any
 
 import json, shutil
+
+from .runners import _RUNNERS
 
 dotenv.load_dotenv()
 
@@ -75,4 +80,15 @@ def write_file(file: str, content: str) -> bool:
         return True
     except FileNotFoundError:
         console.print("wtf: [bold red]File not found.[/bold red]")
-        return False 
+        return False
+
+def exec_file(file: str) -> CompletedProcess[Any] | None:
+    ext = Path(file).suffix
+
+    runner = _RUNNERS.get(ext, None)
+
+    if runner is None:
+        console.print("wtf: [bold red]Unknown file format, please pass error directly.[/bold red]")
+        return
+
+    return runner(file) 

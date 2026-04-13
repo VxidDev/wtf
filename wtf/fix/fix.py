@@ -1,5 +1,5 @@
 from typer import Typer 
-from ..shared import console, check_api_key, get_client, set_api_key_notice, read_file, write_file
+from ..shared import console, check_api_key, get_client, set_api_key_notice, read_file, write_file, exec_file
 import subprocess
 
 app = Typer()
@@ -17,11 +17,7 @@ def fix(file: str, error: str = None) -> None:
     if error:
         content = error 
     else:
-        result = subprocess.run(
-            ["./" + file.split(".")[0]],
-            capture_output=True,
-            text=True
-        )
+        result = exec_file(file)
 
         content = f"[EXIT CODE] {result.returncode}\n[STDOUT] {result.stdout or 'empty'}\n[STDERR] {result.stderr or 'empty'}"
 

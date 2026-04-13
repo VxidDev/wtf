@@ -1,6 +1,6 @@
 [project]
 name = "wtf-cli"
-version = "0.0.2"
+version = "0.1.2"
 description = "Explain & fix your errors directly from the terminal."
 authors = [
     { name = "VxidDev" }
