@@ -45,22 +45,46 @@ def get_client() -> OpenAI | None:
 
     return OpenAI(api_key=key)
 
-def update_config(content: dict | None = None, delete: bool = False) -> None:
+def update_config(content: dict | None = None, delete: bool = False) -> bool:
     if delete:
         if CONFIG_PATH.exists():
             shutil.rmtree(CONFIG_PATH)
 
-        return
+        return True
 
     path = Path(CONFIG_PATH / "config.json")
     path.parent.mkdir(parents=True, exist_ok=True)
 
+    if not path.exists():
+        with open(path, "w") as f:
+            f.write("{}") 
+
     try:
-        with open(path, "w") as file:
-            json.dump(content, file)
-    except FileNotFoundError:
+        with open(path, "r+") as file:
+            config = json.load(file)
+            config |= content 
+
+            file.seek(0)
+            file.truncate()
+            json.dump(config, file)
+        
+        return True
+
+    except (FileNotFoundError, json.JSONDecodeError):
         console.print("wtf: [bold red]Failed to update config.[/bold red]")
-        return 
+        return False
+
+def get_config() -> dict[str] | None:
+    path = Path(CONFIG_PATH / "config.json")
+
+    try:
+        with open(path, "r") as file:
+            content: dict[str] = json.load(file)
+
+        return content   
+    except (FileNotFoundError, json.JSONDecodeError):
+        console.print("wtf: [bold red]Config not found[/bold red]")
+        return None
 
 def read_file(file: str) -> str | None:
     try:
@@ -85,10 +109,24 @@ def write_file(file: str, content: str) -> bool:
 def exec_file(file: str) -> CompletedProcess[Any] | None:
     ext = Path(file).suffix
 
-    runner = _RUNNERS.get(ext, None)
+    executor = _RUNNERS.get(ext, None)
 
-    if runner is None:
+    config: dict[str] = get_config()
+    if config is None:
+        console.print("wtf: [bold red]Failed to load config.[/bold red]")
+
+    runner: str | None = config.get(f"{ext[1:]}_runner", None) 
+
+    if executor is None:
         console.print("wtf: [bold red]Unknown file format, please pass error directly.[/bold red]")
         return
 
-    return runner(file) 
+    try:
+        return executor(file, runner)
+    except FileNotFoundError as e:
+        console.print("wtf: [bold red]File or runner not found[/bold red]")
+        return None
+        
+    except Exception as e:
+        console.print(f"wtf: [bold red]Execution failed[/bold red]")
+        return None

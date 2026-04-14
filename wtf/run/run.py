@@ -6,7 +6,10 @@ app = Typer()
 
 @app.command()
 def run(file: str) -> None:
-    data: CompletedProcess = exec_file(file)
+    data: CompletedProcess | None = exec_file(file)
+
+    if data is None:
+        return
 
     console.print(
         f"Exit Code: {data.returncode}\n"

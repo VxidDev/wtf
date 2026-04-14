@@ -1,18 +1,33 @@
 import subprocess
 from pathlib import Path
 
-def run_python(file: str):
+_DEFAULT_RUNNER_STRINGS = {
+    ".py": "python3 {file}",
+    ".c": "gcc {file} -o {exe}",
+    ".cpp": "g++ {file} -o {exe}"
+}
+
+def run_python(file: str, runner: str | None = None):
+    if runner is None:
+        runner = _DEFAULT_RUNNER_STRINGS.get(".py")
+
+    runner = runner.format(file=file).split()
+
     return subprocess.run(
-        ["python3", file],
+        runner,
         capture_output=True,
         text=True
     )
 
-def run_c(file: str):
+def run_c(file: str, runner: str | None = None):
+    if runner is None:
+        runner = _DEFAULT_RUNNER_STRINGS.get(".c")
+
     exe = Path(file).stem
+    runner = runner.format(file=file, exe=exe).split()
 
     compile = subprocess.run(
-        ["gcc", file, "-o", exe],
+        runner,
         capture_output=True,
         text=True
     )
@@ -26,11 +41,15 @@ def run_c(file: str):
         text=True
     )
 
-def run_cpp(file: str):
+def run_cpp(file: str, runner: str | None = None):
+    if runner is None:
+        runner = _DEFAULT_RUNNER_STRINGS.get(".cpp")
+
     exe = Path(file).stem
+    runner = runner.format(file=file, exe=exe).split()
 
     compile = subprocess.run(
-        ["g++", file, "-o", exe],
+        runner,
         capture_output=True,
         text=True
     )
@@ -44,7 +63,7 @@ def run_cpp(file: str):
         text=True
     )
 
-_RUNNERS: callable[str] = {
+_RUNNERS: dict[callable[str, str]] = {
     ".py": run_python,
     ".c": run_c,
     ".cpp": run_cpp
