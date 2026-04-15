@@ -74,6 +74,32 @@ def update_config(content: dict | None = None, delete: bool = False) -> bool:
         console.print("wtf: [bold red]Failed to update config.[/bold red]")
         return False
 
+def remove_config_value(key: str) -> None:
+    path = Path(CONFIG_PATH / "config.json")
+
+    config: dict[str] | None = get_config()
+
+    if config is None:
+        console.print("wtf: [bold green]Empty config, no need for changes.[/bold green]")
+        return 
+
+    try:
+        config.pop(key)
+    except KeyError:
+        console.print(f'wtf: [bold red]Value "{key}" not found.[/bold red]')
+        return
+
+    try:
+        with open(path, "w") as file:
+            json.dump(config, file)
+
+        console.print(f"wtf: [bold green]Removed value successfully.[/bold green]")
+        return
+
+    except FileNotFoundError:
+        console.print("wtf: [bold red]Failed to update config.[/bold red]")
+        return
+
 def get_config() -> dict[str] | None:
     path = Path(CONFIG_PATH / "config.json")
 
@@ -118,7 +144,7 @@ def exec_file(file: str) -> CompletedProcess[Any] | None:
     runner: str | None = config.get(f"{ext[1:]}_runner", None) 
 
     if executor is None:
-        console.print("wtf: [bold red]Unknown file format, please pass error directly.[/bold red]")
+        console.print("wtf: [bold red]Unknown file format.[/bold red]")
         return
 
     try:

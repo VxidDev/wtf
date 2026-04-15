@@ -1,5 +1,6 @@
 import subprocess
 from pathlib import Path
+import os
 
 _DEFAULT_RUNNER_STRINGS = {
     ".py": "python3 {file}",
@@ -35,11 +36,18 @@ def run_c(file: str, runner: str | None = None):
     if compile.returncode != 0:
         return compile
 
-    return subprocess.run(
+    value = subprocess.run(
         ["./" + exe],
         capture_output=True,
         text=True
     )
+
+    try:
+        os.remove(exe)
+    except Exception:
+        pass
+
+    return value
 
 def run_cpp(file: str, runner: str | None = None):
     if runner is None:
@@ -57,11 +65,18 @@ def run_cpp(file: str, runner: str | None = None):
     if compile.returncode != 0:
         return compile
 
-    return subprocess.run(
+    value = subprocess.run(
         ["./" + exe],
         capture_output=True,
         text=True
     )
+
+    try:
+        os.remove(exe)
+    except Exception:
+        pass
+
+    return value
 
 _RUNNERS: dict[callable[str, str]] = {
     ".py": run_python,
