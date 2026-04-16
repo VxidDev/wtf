@@ -132,7 +132,7 @@ def write_file(file: str, content: str) -> bool:
         console.print("wtf: [bold red]File not found.[/bold red]")
         return False
 
-def exec_file(file: str) -> CompletedProcess[Any] | None:
+def exec_file(file: str, args: list[str] = None) -> CompletedProcess[Any] | None:
     ext = Path(file).suffix
 
     executor = _RUNNERS.get(ext, None)
@@ -148,7 +148,7 @@ def exec_file(file: str) -> CompletedProcess[Any] | None:
         return
 
     try:
-        return executor(file, runner)
+        return executor(file, runner, args if args is not None else [])
     except FileNotFoundError as e:
         console.print("wtf: [bold red]File or runner not found[/bold red]")
         return None

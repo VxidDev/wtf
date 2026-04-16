@@ -1,6 +1,6 @@
 [project]
 name = "wtf-term"
-version = "0.3.2"
+version = "0.4.2"
 description = "Explain & fix your errors directly from the terminal."
 authors = [
     { name = "VxidDev" }

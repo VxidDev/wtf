@@ -1,6 +1,7 @@
 import subprocess
 from pathlib import Path
 import os
+import shlex
 
 _DEFAULT_RUNNER_STRINGS = {
     ".py": "python3 {file}",
@@ -8,27 +9,30 @@ _DEFAULT_RUNNER_STRINGS = {
     ".cpp": "g++ {file} -o {exe}"
 }
 
-def run_python(file: str, runner: str | None = None):
+def run_python(file: str, runner: str | None = None, arguments: list[str] | None = None):
     if runner is None:
         runner = _DEFAULT_RUNNER_STRINGS.get(".py")
 
-    runner = runner.format(file=file).split()
+    cmd = shlex.split(runner.format(file=file))
+
+    if arguments is None:
+        arguments = []
 
     return subprocess.run(
-        runner,
+        cmd + arguments,
         capture_output=True,
         text=True
     )
 
-def run_c(file: str, runner: str | None = None):
+def run_c(file: str, runner: str | None = None, arguments: list[str] | None = None):
     if runner is None:
         runner = _DEFAULT_RUNNER_STRINGS.get(".c")
 
     exe = Path(file).stem
-    runner = runner.format(file=file, exe=exe).split()
+    cmd = shlex.split(runner.format(file=file, exe=exe))
 
     compile = subprocess.run(
-        runner,
+        cmd,
         capture_output=True,
         text=True
     )
@@ -37,7 +41,7 @@ def run_c(file: str, runner: str | None = None):
         return compile
 
     value = subprocess.run(
-        ["./" + exe],
+        ["./" + exe] + arguments,
         capture_output=True,
         text=True
     )
@@ -49,15 +53,15 @@ def run_c(file: str, runner: str | None = None):
 
     return value
 
-def run_cpp(file: str, runner: str | None = None):
+def run_cpp(file: str, runner: str | None = None, arguments: list[str] | None = None):
     if runner is None:
         runner = _DEFAULT_RUNNER_STRINGS.get(".cpp")
 
     exe = Path(file).stem
-    runner = runner.format(file=file, exe=exe).split()
+    cmd = shlex.split(runner.format(file=file, exe=exe))
 
     compile = subprocess.run(
-        runner,
+        cmd,
         capture_output=True,
         text=True
     )
@@ -66,7 +70,7 @@ def run_cpp(file: str, runner: str | None = None):
         return compile
 
     value = subprocess.run(
-        ["./" + exe],
+        ["./" + exe] + arguments,
         capture_output=True,
         text=True
     )

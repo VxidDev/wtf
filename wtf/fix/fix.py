@@ -22,39 +22,54 @@ def fix(file: str, error: str = None) -> None:
         content = f"[EXIT CODE] {result.returncode}\n[STDOUT] {result.stdout or 'empty'}\n[STDERR] {result.stderr or 'empty'}"
 
     response = get_client().responses.create(
-        model="gpt-4.1-nano",
+        model="gpt-4.1",
+        temperature=0.1,
         input=[
             {
                 "role": "system",
                 "content": (
-                    "You are a senior software engineer specializing in code debugging. "
-                    "Your job is to fix bugs that cause crashes, undefined behavior, or incorrect execution. "
-                    "You must prioritize correctness, safety, and minimal changes. "
-                    "Do not refactor or improve style unless required to fix the bug."
+                    "You are an elite software engineer and compiler-level debugger. "
+                    "Your task is to FIX code so that it compiles and runs correctly. "
+                    "You think step-by-step like a compiler and runtime.\n\n"
+
+                    "STRICT REQUIREMENTS:\n"
+                    "- The final code MUST compile with zero errors\n"
+                    "- The final code MUST run without crashes or undefined behavior\n"
+                    "- You MUST fix ALL syntax errors (e.g., missing semicolons, invalid includes, bad declarations)\n"
+                    "- You MUST fix ALL runtime issues if present\n"
+                    "- You MUST fix the ROOT CAUSE, not symptoms\n"
+                    "- You MUST apply MINIMAL changes, but they must be COMPLETE\n"
+                    "- You MUST NOT refactor unrelated code\n"
+                    "- You MUST NOT change logic unless required for correctness\n"
+                    "- You MUST NOT add comments or explanations\n"
+                    "- You MUST NOT output anything except raw valid source code\n"
+                    "- You MUST NOT output ANY markdown not related code, so no backticks at start and the end.\n\n"  
+
+                    "FAILURE CONDITIONS (DO NOT ALLOW THESE):\n"
+                    "- Code that does not compile\n"
+                    "- Leaving any syntax error unfixed\n"
+                    "- Partial fixes\n"
+                    "- Adding unnecessary changes\n\n"
+
+                    "Treat this like a strict compilation pipeline: "
+                    "syntax -> semantics -> runtime correctness."
                 )
             },
             {
                 "role": "user",
                 "content": (
                     "Fix the following program.\n\n"
-                    "Rules:\n"
-                    "- The program must compile and run without undefined behavior\n"
-                    "- You MUST eliminate the cause of crashes, not just change values\n"
-                    "- If there is a NULL pointer dereference, you MUST add a safety check or restructure logic\n"
-                    "- Fix control flow if needed (do NOT only change assignments)\n"
-                    "- Preserve behavior only when it is safe\n"
-                    "- Prefer fixing the root cause (incorrect initialization) over adding null checks, if possible.\n"
-                    "- Apply minimal but COMPLETE fix (minimal changes allowed, but must fully fix the bug)\n"
-                    "- Do NOT refactor unrelated code\n"
-                    "- Do NOT add comments or explanations\n"
-                    "- Return ONLY valid source code. No backticks, no markdown.\n\n"
+
+                    "INSTRUCTIONS:\n"
+                    "1. First ensure the code compiles\n"
+                    "2. Then ensure it runs correctly\n"
+                    "3. Apply the smallest possible complete fix\n\n"
+
                     f"Error context:\n{content}\n\n"
                     f"Code:\n{file_content}\n"
                 )
             }
-        ],
-
-        temperature=0.1
+        ]
     )
 
     console.print(f"[bold cyan]{response.output[0].content[0].text.strip()}[/bold cyan]\n\n")
