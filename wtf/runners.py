@@ -3,87 +3,88 @@ from pathlib import Path
 import os
 import shlex
 
+from subprocess import CompletedProcess
+
 _DEFAULT_RUNNER_STRINGS = {
     ".py": "python3 {file}",
     ".c": "gcc {file} -o {exe}",
-    ".cpp": "g++ {file} -o {exe}"
+    ".cpp": "g++ {file} -o {exe}",
+    ".rs": "rustc {file} -o {exe}"
 }
 
-def run_python(file: str, runner: str | None = None, arguments: list[str] | None = None):
-    if runner is None:
-        runner = _DEFAULT_RUNNER_STRINGS.get(".py")
+class Runner:
+    def __init__(self, compile: bool = False, cleanup: bool = True) -> None:
+        self.compile = compile
+        self.cleanup = cleanup
 
-    cmd = shlex.split(runner.format(file=file))
+    @staticmethod
+    def _extract_file_data(file: str) -> dict[str, str]:
+        path = Path(file)
 
-    if arguments is None:
-        arguments = []
+        return {
+            "name": path.stem,
+            "ext": path.suffix.lstrip("."),
+            "ext_with_dot": path.suffix,
+            "full": path.name
+        }
 
-    return subprocess.run(
-        cmd + arguments,
-        capture_output=True,
-        text=True
-    )
+    def run(self, file: str, runner: str | None = None, arguments: list[str] | None = None) -> CompletedProcess | None:
+        file_data: dict[str, str] = self._extract_file_data(file)
 
-def run_c(file: str, runner: str | None = None, arguments: list[str] | None = None):
-    if runner is None:
-        runner = _DEFAULT_RUNNER_STRINGS.get(".c")
+        if runner is None:
+            runner: str | None = _DEFAULT_RUNNER_STRINGS.get(file_data["ext_with_dot"])
 
-    exe = Path(file).stem
-    cmd = shlex.split(runner.format(file=file, exe=exe))
+            if runner is None:
+                print("wtf: Runner string not found.")
+                return 
 
-    compile = subprocess.run(
-        cmd,
-        capture_output=True,
-        text=True
-    )
+        format_args: dict[str, str] = {
+            "file": file
+        }
 
-    if compile.returncode != 0:
-        return compile
+        if self.compile:
+            format_args["exe"] = file_data.get("name")
 
-    value = subprocess.run(
-        ["./" + exe] + arguments,
-        capture_output=True,
-        text=True
-    )
+        cmd = shlex.split(runner.format(**format_args))
 
-    try:
-        os.remove(exe)
-    except Exception:
-        pass
+        if arguments is None:
+            arguments = []
 
-    return value
+        if self.compile:
+            compile_proc = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True
+            )
 
-def run_cpp(file: str, runner: str | None = None, arguments: list[str] | None = None):
-    if runner is None:
-        runner = _DEFAULT_RUNNER_STRINGS.get(".cpp")
+            if compile_proc.returncode != 0:
+                return compile_proc
 
-    exe = Path(file).stem
-    cmd = shlex.split(runner.format(file=file, exe=exe))
+            exe = format_args["exe"]
 
-    compile = subprocess.run(
-        cmd,
-        capture_output=True,
-        text=True
-    )
+            value = subprocess.run(
+                ["./" + exe] + arguments,
+                capture_output=True,
+                text=True
+            )
 
-    if compile.returncode != 0:
-        return compile
+            if self.cleanup:
+                try:
+                    os.remove(exe)
+                except Exception:
+                    pass
+        else:
+            return subprocess.run(
+                cmd + arguments,
+                capture_output=True,
+                text=True
+            )
 
-    value = subprocess.run(
-        ["./" + exe] + arguments,
-        capture_output=True,
-        text=True
-    )
+        return value
 
-    try:
-        os.remove(exe)
-    except Exception:
-        pass
-
-    return value
-
-_RUNNERS: dict[callable[str, str]] = {
-    ".py": run_python,
-    ".c": run_c,
-    ".cpp": run_cpp
+_RUNNERS: dict[str, Runner] = {
+    ".py": Runner(),
+    ".c": Runner(True),
+    ".cpp": Runner(True),
+    ".rs": Runner(True)
 } 

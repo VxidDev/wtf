@@ -1,4 +1,4 @@
-from ..shared import update_config, console, _RUNNERS, get_config, remove_config_value
+from ..shared import update_config, console, _RUNNERS, get_config, remove_config_value, lang_map
 from typer import Typer, Option
 
 import json
@@ -19,14 +19,6 @@ def clear_api_key() -> None:
 def runner(lang: str, command: str = None, clear: bool = Option(False, "--clear", "-c")) -> None:
     if not command and not clear:
         console.print("wtf: [bold yellow]missing argument 'command'[/bold yellow]")
-
-    lang_map: dict[str, str] = {
-        "py": "py",
-        "python": "py",
-        "c": "c",
-        "cpp": "cpp",
-        "c++": "cpp",
-    }
 
     extension = lang_map.get(lang)
 

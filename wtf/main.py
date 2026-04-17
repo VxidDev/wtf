@@ -5,6 +5,7 @@ from .fix import fix
 from .explain import explain
 from .config import config
 from .run import run
+from .diagnose import diagnose
 
 app = Typer(pretty_exceptions_enable=False)
 
@@ -12,6 +13,7 @@ app.add_typer(fix.app)
 app.add_typer(explain.app)
 app.add_typer(config.app)
 app.add_typer(run.app)
+app.add_typer(diagnose.app)
 
 if __name__ == "__main__":
     try:

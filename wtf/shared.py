@@ -14,6 +14,16 @@ from .runners import _RUNNERS
 
 dotenv.load_dotenv()
 
+lang_map: dict[str, str] = {
+        "py": "py",
+        "python": "py",
+        "c": "c",
+        "cpp": "cpp",
+        "c++": "cpp",
+        "rust": "rs",
+        "rs": "rs"
+    }
+
 console = Console()
 
 CONFIG_PATH = Path.home() / ".wtf"
@@ -148,7 +158,7 @@ def exec_file(file: str, args: list[str] = None) -> CompletedProcess[Any] | None
         return
 
     try:
-        return executor(file, runner, args if args is not None else [])
+        return executor.run(file, runner, args if args is not None else [])
     except FileNotFoundError as e:
         console.print("wtf: [bold red]File or runner not found[/bold red]")
         return None
