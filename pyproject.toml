@@ -1,6 +1,6 @@
 [project]
 name = "wtf-term"
-version = "0.5.3"
+version = "0.6.3"
 description = "Explain & fix your errors directly from the terminal."
 authors = [
     { name = "VxidDev" }
@@ -13,7 +13,8 @@ dependencies = [
     "rich",
     "typer",
     "openai",
-    "dotenv"
+    "dotenv",
+    "pytest"
 ]
 
 [project.scripts]

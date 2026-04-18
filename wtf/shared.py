@@ -15,14 +15,14 @@ from .runners import _RUNNERS
 dotenv.load_dotenv()
 
 lang_map: dict[str, str] = {
-        "py": "py",
-        "python": "py",
-        "c": "c",
-        "cpp": "cpp",
-        "c++": "cpp",
-        "rust": "rs",
-        "rs": "rs"
-    }
+    "py": "py",
+    "python": "py",
+    "c": "c",
+    "cpp": "cpp",
+    "c++": "cpp",
+    "rust": "rs",
+    "rs": "rs"
+}
 
 console = Console()
 
@@ -59,29 +59,31 @@ def update_config(content: dict | None = None, delete: bool = False) -> bool:
     if delete:
         if CONFIG_PATH.exists():
             shutil.rmtree(CONFIG_PATH)
-
         return True
 
-    path = Path(CONFIG_PATH / "config.json")
+    path = CONFIG_PATH / "config.json"
     path.parent.mkdir(parents=True, exist_ok=True)
 
-    if not path.exists():
-        with open(path, "w") as f:
-            f.write("{}") 
+    config = {}
+    if path.exists():
+        try:
+            with open(path, "r") as file:
+                config = json.load(file)
+        except json.JSONDecodeError:
+            console.print("wtf: [bold yellow]Config file is malformed, starting with empty config.[/bold yellow]")
+            config = {}
+        except FileNotFoundError:
+            pass # Should not happen if path.exists() is true
+
+    if content is not None:
+        config.update(content) # Use update to merge dictionaries
 
     try:
-        with open(path, "r+") as file:
-            config = json.load(file)
-            config |= content 
-
-            file.seek(0)
-            file.truncate()
-            json.dump(config, file)
-        
+        with open(path, "w") as file:
+            json.dump(config, file, indent=4) # Use indent for readability
         return True
-
-    except (FileNotFoundError, json.JSONDecodeError):
-        console.print("wtf: [bold red]Failed to update config.[/bold red]")
+    except IOError: # Catch more general IO errors for writing
+        console.print("wtf: [bold red]Failed to write to config file.[/bold red]")
         return False
 
 def remove_config_value(key: str) -> None:
@@ -148,8 +150,9 @@ def exec_file(file: str, args: list[str] = None) -> CompletedProcess[Any] | None
     executor = _RUNNERS.get(ext, None)
 
     config: dict[str] = get_config()
+
     if config is None:
-        console.print("wtf: [bold red]Failed to load config.[/bold red]")
+        return
 
     runner: str | None = config.get(f"{ext[1:]}_runner", None) 
 
@@ -166,3 +169,8 @@ def exec_file(file: str, args: list[str] = None) -> CompletedProcess[Any] | None
     except Exception as e:
         console.print(f"wtf: [bold red]Execution failed[/bold red]")
         return None
+
+def compile_file(file: str, args: list[str] = None) -> CompletedProcess[Any] | None:
+    ext = Path(file).suffix 
+
+

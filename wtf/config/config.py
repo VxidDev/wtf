@@ -1,4 +1,4 @@
-from ..shared import update_config, console, _RUNNERS, get_config, remove_config_value, lang_map
+from ..shared import update_config, console, _RUNNERS, get_config, remove_config_value, lang_map, CONFIG_PATH
 from typer import Typer, Option
 
 import json
@@ -82,3 +82,15 @@ def get_cfg() -> None:
         return 
 
     console.print_json(data=config)
+
+@app.command(name="init-config")
+def init_config() -> None:
+    if (CONFIG_PATH / "config.json").exists():
+        console.print("wtf: [bold yellow]Config exists, aborting...[/bold yellow]")
+        return
+
+    if not update_config({}):
+        console.print("wtf: [bold red]Failed to initialize config.[/bold red]")
+        return
+
+    console.print("wtf: [bold green]Initialized config successfully.[/bold green]") 
